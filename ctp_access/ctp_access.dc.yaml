@@ -1,0 +1,84 @@
+apiVersion: v1
+kind: List
+items:
+- kind: DeploymentConfig
+  apiVersion: v1
+  metadata: 
+    name: "sctp-024596-n"
+    annotations: 
+      description: "Defines how to deploy the application server"
+      template.alpha.openshift.io/wait-for-ready: "true"
+  spec: 
+    strategy: 
+      type: Recreate
+    triggers: 
+    - type: ImageChange
+      imageChangeParams: 
+        automatic: true
+        containerNames: 
+        - ctp-access
+        from:
+          kind: ImageStreamTag
+          name: "ctp-access:latest"
+    - type: ConfigChange
+    replicas: 1
+    selector: 
+      name: "sctp-024596-n"
+    template: 
+      metadata:
+        labels:
+          name: "sctp-024596-n"
+      spec:
+        hostIPC: true
+        nodeSelector:
+          node-role.xueqiao.quotation/access: 'true'
+        tolerations:
+        - key: "xueqiao.quotation.access"
+          operator: "Equal"
+          value: "true"
+          effect: "NoExecute"
+        volumes:
+        - hostPath:
+            path: /usr/local/soldier/qconf_agent/script
+            type: Directory
+          name: qconf-scripts
+        - hostPath:
+            path: /data/configs/qconf
+            type: Directory
+          name: qconf-configs
+        containers: 
+        - name: ctp-access
+          image: " "
+          env:
+          - name: APPLOG_STDOUT_MODE
+            value: 'true'
+          - name: PLATFORM
+            value: 'SCTP'
+          - name: USER_NAME
+            value: '024596'
+          - name: USER_PASSWD
+            value: '123456'
+          - name: BROKER_ID
+            value: '9999'
+          - name: TRADE_FRONTEND
+            value: 'tcp://180.168.146.187:10000'
+          - name: MD_FRONTEND
+            value: 'tcp://180.168.146.187:10010'
+          - name: RESTART_CLOCKS
+            value: '08:30;20:30'
+          - name: HOST_ADDR
+            valueFrom:
+              fieldRef:
+                fieldPath: status.hostIP
+          resources:
+            limits:
+              cpu: "0.5"
+              memory: "500Mi"
+            requests:
+              cpu: "0.1"
+              memory: "200Mi"
+          volumeMounts:
+          - mountPath: /usr/local/soldier/qconf_agent/script
+            name: qconf-scripts
+          - mountPath: /data/configs/qconf
+            name: qconf-configs
